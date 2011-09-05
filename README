@@ -1,0 +1,30 @@
+  This module is a wrapper around SafeConfigParser that makes it more pythonic
+  (IMHO, naturally), by allowing users to access things as attributes, rather
+  than using .getboolean(), etc. Config files like the following:
+
+  [example]
+  foo = bar
+  one = 1
+
+  can be accessed as:
+
+  conf = TYConfig("file")
+  assert conf.example.foo == 'bar'
+  assert conf.example.one == 1
+
+  tyconfig also tries to guess the type of your values. there is support for
+  bool, int, and float hoisting, mirroring the getbool, getint and getfloat
+  methods. The one difference is that ConfigParser's getbool() will return
+  False on a config value of '0' (so tests such as False is False will pass),
+  but TYConfig will return 0 (0 is False fails). Test such as if 0: still
+  evaluate to false, so as long as you're not doing pointer comparsions on
+  false values (probably poor form anyway), these two are semantically
+  equivalent.
+
+  ----------------------------------------------------------------------------
+  "THE BEER-WARE LICENSE" (Revision 42):
+  <tycho@tycho.ws> wrote this file. As long as you retain this notice you
+  can do whatever you want with this stuff. If we meet some day, and you think
+  this stuff is worth it, you can buy me a beer in return. Tycho Andersen
+  (Shamelessly stolen from: http://people.freebsd.org/~phk/)
+  ----------------------------------------------------------------------------
