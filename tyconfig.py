@@ -61,20 +61,38 @@ class _Section(object):
     object.__setattr__(self, "_name", name)
     object.__setattr__(self, "_conf", conf)
 
+    if not conf.has_section(name):
+      conf.add_section(name)
+
     for (k, v) in conf.items(self._name):
       object.__setattr__(self, k, guess_type(v))
   
   def __setattr__(self, k, v):
-    self._conf.set(self._name, k, v)
+    self._conf.set(self._name, k, str(v))
     object.__setattr__(self, k, v)
+  
+  def __getattr__(self, k):
+    defaults = self.__dict__["_conf"].defaults
+    try:
+      return self.__dict__[k]
+    except KeyError:
+      pass
 
+    if k in defaults[self._name]:
+      setattr(self, k, defaults[self._name][k])
+      return self.__dict__[k]
+    raise AttributeError("No option " + k)
+    
 class TYConfig(SafeConfigParser):
-  def __init__(self, *args, **kwargs):
+  def __init__(self, defaults = None, *args, **kwargs):
+    
+    if not defaults:
+      defaults = {}
+
     SafeConfigParser.__init__(self, *args, **kwargs)
+    self.defaults = defaults
   
   def __getattr__(self, name):
-    if not self.has_section(name):
-      raise AttributeError("No section: " + name)
     s = _Section(name, self)
     setattr(self, name, s)
     return s
@@ -89,12 +107,19 @@ false = 0
 true = true
 gtf_separator = tests passed!
 """
-  conf = TYConfig()
+  defaults = { "misc" : { "six" : 6 },
+               "foo" : { "bar" : "baz" },
+             }
+
+  conf = TYConfig(defaults = defaults)
   conf.readfp(StringIO(testfile))
 
   assert conf.misc.one == 1
   assert conf.misc.onepointfive == 1.5
   assert not conf.misc.false 
   assert conf.misc.true
+
+  assert conf.misc.six == 6
+  assert conf.foo.bar == "baz"
 
   print conf.misc.gtf_separator
